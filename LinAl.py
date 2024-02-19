@@ -105,22 +105,21 @@ def gaussian_elimination_partial_piv(A, B):
   return A, B, is_singular
 def back_substitution(A, B):
   print("Performing back substitution...\n")
-  A_B = np.concatenate((A, B), axis = 1)
+  A_B = np.concatenate((A,B), axis = 1)
   rows, columns = A.shape
   x = np.zeros_like(B)
-  den = A_B[rows-1][rows-1]
-  num = A_B[rows-1][rows]
-  x[rows - 1] = num/den
-  for i in range(rows - 2, -1, -1): #start at end and work backwards
+  x[rows-1] = A_B[rows-1][rows]/A_B[rows-1][rows-1]
+  for i in range(rows - 2, -1, -1):
     x[i] = A_B[i][rows]
-    for j in range(i +1, rows):
+    for j in range(i+1, rows):
       x[i] = x[i] - A_B[i][j] * x[j]
     x[i] = x[i]/A_B[i][i]
   print("Solution vector x:")
   print_matrix(x)
   print("\n")
   return x
-#def back_substitution(A,B):
+
+
   
 
 def error_matrix(A_s, x, B_s):
