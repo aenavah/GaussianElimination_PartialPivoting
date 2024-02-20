@@ -131,21 +131,20 @@ def LU_decomp(A):
       j_row = np.copy(A[j, :])
       A[j, :] = k_row
       A[k, :] = j_row
-      s_j = np.copy(j)
-      s_k = np.copy(k)
-      s[j] = s_j
-      s[k] = s_k
+      s_j = np.copy(s[j])
+      s_k = np.copy(s[k])
+      s[j] = s_k
+      s[k] = s_j
     if A[j][j] == 0:
       singular = True
-      return A, s, singular
-    if A[j][j] == 0:
       return A, s, singular
     for i in range(j+1, rows):
       A[i][j] = A[i][j]/A[j][j]
       for k in range(j+1, rows):
-        A[i][k] = A[i][k]-A[i][j]*A[j][k]
+        A[i][k] = A[i][k] - A[i][j]*A[j][k]
   print_matrix(A, "A after LU")
   return A, s, singular
+
 def LU_backsub(A, B, s):
   print("Performing LU Backsubstitution...")
   A_rows, A_cols = A.shape
@@ -179,21 +178,21 @@ def LU_backsub(A, B, s):
 
 
 if __name__ == "__main__":
-  A_matrix, A_rows, A_cols = get_size(Amat)
-  B_matrix, B_rows, B_cols = get_size(Bmat)
-  A_s = A_matrix
-  B_s = B_matrix
+  # A_matrix, A_rows, A_cols = get_size(Amat)
+  # B_matrix, B_rows, B_cols = get_size(Bmat)
+  # A_s = A_matrix
+  # B_s = B_matrix
 
-  #Question 3
-  A, B, is_singular = gaussian_elimination_partial_piv(A_matrix, B_matrix)
-  if is_singular == True:
-    print("A is singular \n -----------")
-  if is_singular == False:
-    print("A is not singular \n -----------")
-  x = back_sub(A,B)
-  print("-----------")
-  error = error_matrix(A_s, x, B_s)
-  error_norms = col_norms(error)
+  # #Question 3
+  # A, B, is_singular = gaussian_elimination_partial_piv(A_matrix, B_matrix)
+  # if is_singular == True:
+  #   print("A is singular \n -----------")
+  # if is_singular == False:
+  #   print("A is not singular \n -----------")
+  # x = back_sub(A,B)
+  # print("-----------")
+  # error = error_matrix(A_s, x, B_s)
+  # error_norms = col_norms(error)
 
   #Question 4
   # print_matrix(A_matrix, "A before LU")
@@ -201,8 +200,8 @@ if __name__ == "__main__":
   # X = LU_backsub(A_LU, B_matrix, swaps)
 
   #LU Test
-  A_t = np.array([[1, 2, 3], [0, 4, 5], [0, 0, 6]])
-  B_t = np.array([[6, 9, 6], [0,0,0]])
+  A_t = np.array([[1, 2], [3, 4]])
+  B_t = np.array([[6, 9], [0, 0]])
   U_t, swaps_t, singular_t = LU_decomp(A_t)
   print("test swaps:" + str(swaps_t))
   X = LU_backsub(U_t, B_t, swaps_t)
