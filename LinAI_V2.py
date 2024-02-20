@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import copy
+import scipy
 
 Amat = "Amat.dat"
 Bmat = "Bmat.dat"
@@ -120,28 +121,36 @@ def LU_decomp(A):
   print("Performing LU Decomposition...")
   singular = False
   rows, columns = A.shape
+  print(rows, columns)
   s = list(range(rows)) #python indexing!
-  for col in range(0, columns):
+
+  for col in range(0, columns): # range doesn't reach last entry 
+    for i in 
     j = col
-    column = A[:, col]
-    k = np.argmax(np.abs(column)) #index
+    column = A[:, j]
+    k = np.argmax(np.abs(column)) # index
     p = np.max(column) # value
     if k != j:
       k_row = np.copy(A[k, :])
       j_row = np.copy(A[j, :])
       A[j, :] = k_row
       A[k, :] = j_row
+      A_swapped = np.copy(A)
+      #print(A)
       s_j = np.copy(s[j])
       s_k = np.copy(s[k])
       s[j] = s_k
       s[k] = s_j
-    if A[j][j] == 0:
+      print("----A after swap ---")
+      print(A_swapped)
+    if (abs(A[j, j]) <= 10**(-16)):
       singular = True
       return A, s, singular
     for i in range(j+1, rows):
-      A[i][j] = A[i][j]/A[j][j]
-      for k in range(j+1, rows):
-        A[i][k] = A[i][k] - A[i][j]*A[j][k]
+      A[i, j] /= A[j, j] #A[i][j]/
+      for k_2 in range(j+1, rows):
+        print(A[i,k_2])
+        A[i,k_2] -=  A[i,j]*A[j,k_2]
   print_matrix(A, "A after LU")
   return A, s, singular
 
@@ -204,7 +213,8 @@ if __name__ == "__main__":
   B_t = np.array([[6, 9], [0, 0]])
   U_t, swaps_t, singular_t = LU_decomp(A_t)
   print("test swaps:" + str(swaps_t))
-  X = LU_backsub(U_t, B_t, swaps_t)
+  #print(scipy.linalg.lu(A_t))
+  #X = LU_backsub(U_t, B_t, swaps_t)
 
   #Question 5
   # Q5 = np.array([[1,2,3],[-3,2,5],[np.pi, np.e, -(2**(1/2))]])
