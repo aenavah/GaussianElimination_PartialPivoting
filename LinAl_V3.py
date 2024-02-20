@@ -2,10 +2,11 @@ import pandas as pd
 import numpy as np
 import copy
 import scipy
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
-Amat = "Amat.dat"
-Bmat = "Bmat.dat"
 
+#turn matrix into python readable
 def get_size(myFileName):
   with open(myFileName, 'r') as myFile:
     data = myFile.read()
@@ -13,9 +14,29 @@ def get_size(myFileName):
     nsize = int(data[2])
     matrix = np.loadtxt(myFileName, skiprows=1)
     return matrix, msize, nsize
-def print_matrix(matrix, name):
+
+def trace(matrix, m_dummy, output_dummy):
+  trace = 0.0
   rows, columns = matrix.shape
-  print("Printing "+ name)
+  for index in range(0, rows):
+    diag = matrix[index][index]
+    trace += float(diag)
+  print("Trace of matrix: " + str(trace))
+  print("-----------")
+  return trace
+
+def col_norms(matrix, dimension_dummy, output_dummy):
+  rows, columns = matrix.shape
+  for index in range(columns):
+    col_sqrt = 0
+    for row in matrix:
+      col_sqrt += row[index]**2
+    norm = col_sqrt**(1/2)
+    print("Norm of column " + str(index) + ": " + str(norm))
+  print("-----------")
+
+def print_matrix(matrix, mn_dummy):
+  rows, columns = matrix.shape
   print("Matrix of size " + str(rows) + "x" + str(columns) + ":")
   for row in matrix:
     #print(row)
@@ -25,26 +46,9 @@ def print_matrix(matrix, name):
       if index != columns:
         print(cell, end = " , ")
       if index == columns:
-        print(cell,  "\n")
-def trace(matrix):
-  trace = 0.0
-  rows, columns = matrix.shape
-  for index in range(0, rows):
-    diag = matrix[index][index]
-    trace += float(diag)
-  print("Trace of matrix: " + str(trace))
-  print("-----------")
-  return trace
-def col_norms(matrix):
-  rows, columns = matrix.shape
-  for index in range(columns):
-    col_sqrt = 0
-    for row in matrix:
-      col_sqrt += row[index]**2
-    norm = col_sqrt**(1/2)
-    print("Norm of column " + str(index) + ": " + str(norm))
-  print("-----------")
-def error_matrix(A_s, x, B_s):
+        print(cell,  "\n")  
+
+def error_matrix(A_s, B_s, x):
   print("Producing error matrix...\n")
   #x = np.reshape(x, (4, 1))
   error_matrix = A_s @ x - B_s
@@ -52,8 +56,18 @@ def error_matrix(A_s, x, B_s):
   print_matrix(error_matrix, "Error Matrix")
   return error_matrix
 
-#------Question 3------
-def gaussian_elimination_partial_piv(A, B):
+'''Now write a driver (or calling) program that takes a filename as an argument,
+reads the matrix A from the Amat.dat file, and performs the following tests:'''
+def driver_1(filename):
+  print("Getting matrix from " + filename + "...")
+  matrix, A_rows, A_cols = get_size(filename)
+  print_matrix(matrix, dummy)
+  trace(matrix, dummy, dummy)
+  col_norms(matrix, dummy, dummy)
+  return matrix
+
+'''Gaussian elimination with partial pivoting'''
+def gaussian_elimination_partial_piv(A, B, dummy1, dummy2, dummy3):
   print("Performing Gaussian elimination with partial pivoting...\n")
   print("Original Matrices:\n")
   print("A =", end = " ")
@@ -98,7 +112,8 @@ def gaussian_elimination_partial_piv(A, B):
   print("B =", end = " ")
   print_matrix(B, "B")
   return A,B,is_singular
-def back_sub(A, B):
+'''Back substitution for gaussian elimination'''
+def back_sub_GE(A, B):
   print("Performing back substitution...\n")
   A_B = np.concatenate((A,B), axis = 1)
   rows, columns = A.shape
@@ -111,15 +126,16 @@ def back_sub(A, B):
       for j in range(i+1, rows):
         x[i, col] = x[i, col] - A_B[i, j] * x[j, col] 
       x[i, col] = x[i, col] / A_B[i, i]
-    print("Solution vector x:")
-    print_matrix(x, "X")
-    print("\n")
+  print("Solution Matrix X from Gaussian Elimination:")
+  print_matrix(x, dummy)
+  print("\n")
   return x
-
-#------Question 4------
+'''Lu decomposition'''
 def LU_decomp(Ainput, dummym, dummysingular, dummys):
   A = np.copy(Ainput)
   print("Performing LU Decomposition...")
+  print("Original Matrix before LU Decomposition:")
+  print_matrix(A, dummy)
   singular = False
   rows, columns = A.shape
   #filling permutation vector
@@ -144,7 +160,7 @@ def LU_decomp(Ainput, dummym, dummysingular, dummys):
       s[j] = s[k]
       s[k] = s_j
     #check for singularity 
-    if (abs(A[j, j]) <= 10**(-16)):
+    if (abs(A[j, j]) <= 0.0):
       singular = True
       return A, s, singular
     #zero lower diags 
@@ -152,8 +168,29 @@ def LU_decomp(Ainput, dummym, dummysingular, dummys):
         A[i, j] /= A[j, j]
         for t in range(j+1, rows):
             A[i,t] -=  A[i,j]*A[j,t]
+    #Get L U:
+    U = np.zeros_like(A)
+    L = np.zeros_like(A)
+    for i in range(0, rows):
+      for j in range(0, rows):
+        if j < i:
+          U[i,j] = 0 
+          L[i,j] = A[i,j]
+        if j > i:
+          U[i,j] = A[i,j]
+        if j == i:
+          U[i,j] = A[i,j]
+          L[i,j] = 1.0
+  print("Matrix after LU decomposition:")
+  print_matrix(A, dummy)
+  print("L Matrix:")
+  print_matrix(L, dummy)
+  print("U Matrix:")
+  print_matrix(U, dummy)
   return A, s, singular
-def LU_backsub(A, B, s):
+
+'''Lu backsubstitution'''
+def LU_backsub(A, dummydimension, B, s):
   print("Performing LU Backsubstitution...")
   A_rows, A_cols = A.shape
   B_rows, B_cols = B.shape
@@ -172,7 +209,7 @@ def LU_backsub(A, B, s):
   #backsubstitution
   for j in range(0, n):
     for i in range(m - 1, -1, -1):
-      if abs(A[i,i]) <= 10**(-16):
+      if abs(A[i,i]) == 0.0:
         print("Is singular")
         return 
       summation = 0.0
@@ -180,64 +217,52 @@ def LU_backsub(A, B, s):
         summation += A[i,k]*X[k, j]
       X[i, j] = (Y[i, j] - summation)/A[i,i]
   return X
-  #   #forward substitution
-  #   for j in range(1,m-1):
-  #     for i in range(j+1, m):
-  #       Y[i, :]= Y[i, :]-Y[j, :]*A[i][j]
-  #   #backsub
-  #   for i in range(m, 1, -1): #indexing? 
-  #     if A[i, i] == 0 :
-  #       print("Singular")
-  #       return X
-  #     sum = 0.0
-  #     for k in range(i+1, m):
-  #       sum += A[i][k]*x[k]
-  #     x[i] = (y[i]-sum)/A[i][i]
-  #   X[:, col]=x
-  # print_matrix(X, "X from LU Decomposition")
-  # return X
-
+def plot(X_5, D, Coefs):
+  pass
 
 if __name__ == "__main__":
-  A_matrix, A_rows, A_cols = get_size(Amat)
-  B_matrix, B_rows, B_cols = get_size(Bmat)
-  A_s = A_matrix
-  B_s = B_matrix
+  global dummy, emach 
+  dummy = " " #used to make input easier for grading, necessary inputs are calculated by the function
+  emach = 10**(-16)
 
-  #Question 3
-  A, B, is_singular = gaussian_elimination_partial_piv(A_matrix, B_matrix)
-  if is_singular == True:
-    print("A is singular \n -----------")
-  if is_singular == False:
-    print("A is not singular \n -----------")
-  x = back_sub(A,B)
-  print("-----------")
-  error = error_matrix(A_s, x, B_s)
-  error_norms = col_norms(error)
+  #Driver to print matrix, get trace, and get column norm, the matrix is returned
+  A = driver_1("Amat.dat")
+  B = driver_1("Bmat.dat")
 
-  #Question 4
-  # print_matrix(A_matrix, "A before LU")
-  # U_A, swaps, singular = LU_decomp(A_matrix)
-  # X = LU_backsub(A_LU, B_matrix, swaps)
+###----------Question 3----------
+  #Gaussian elimination reduction
+  A_GE, B_GE, is_singular = gaussian_elimination_partial_piv(A, B, dummy, dummy, dummy)   
+  #Gaussian backsubstitution
+  X_GE = back_sub_GE(A_GE,B_GE)    
+  #Gaussian Error
+  A_s = A 
+  B_s = B
+  error_GE = error_matrix(A_s, B_s, X_GE)
+  error_norms_GE = col_norms(error_GE, dummy, dummy)
 
-  #LU Test
-  # A_t = np.zeros([2,2])
-  # A_t[:,0] = [1,3]
-  # A_t[:,1] = [2,4]
-  # #A_t = np.array([[1, 2], [3, 4]])
-  # B_t = np.zeros([2,2])
-  # B_t[:, 0] = [6, 0]
-  # B_t[:, 1] = [9, 0]
-  # #B_t = np.array([[6, 9], [0, 0]])
-  # U_t, swaps_t, singular_t = LU_decomp(A_t)
-  # print("test swaps:" + str(swaps_t))
-  # print(U_t)
-  # #print(scipy.linalg.lu(A_t))
-  # X = LU_backsub(U_t, B_t, swaps_t)
+###----------Question 4----------
+  #LU decomposition
+  U, swaps, singular = LU_decomp(A, dummy, dummy, dummy)
+  #LU backsubstitution
+  X_LU = LU_backsub(U, dummy, B, swaps)
+  #LU error
+  A_s = A
+  B_s = B
+  error_LU = error_matrix(A_s, B_s, X_LU)
+  error_norms_LU = col_norms(error_LU, dummy, dummy)
+  
+###----------Question 5----------
+  d = 1.0
+  D = np.array([[d], [d], [d]])
+  Coefs = np.zeros((3, 3))
+  Coefs[:, 0] = [1, -3, np.pi]
+  Coefs[:, 1] = [2, 2, np.e]
+  Coefs[:, 2] = [3, 5, -(2**(1/2))]
+  U_5, swaps_5, singular_5 = LU_decomp(Coefs, dummy, dummy, dummy)
+  X_5 = LU_backsub(U_5, dummy, D, swaps_5)
+  print_matrix(X_5, dummy)
+  
+  plot(X_5, D, Coefs) #couldnt get to work
 
-  #Question 5
-  # Q5 = np.array([[1,2,3],[-3,2,5],[np.pi, np.e, -(2**(1/2))]])
-  # U_5, swaps_5, singular_5 = LU_decomp(Q5)
-  # X_5 = LU_backsub(U_5, B) what to put for B? 
-
-#
+  #Check :) 
+  #print(scipy.linalg.lu(A))
