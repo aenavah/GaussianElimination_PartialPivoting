@@ -117,73 +117,89 @@ def back_sub(A, B):
   return x
 
 #------Question 4------
-def LU_decomp(A): 
+def LU_decomp(Ain):
+  A = np.copy(Ain)
   print("Performing LU Decomposition...")
   singular = False
-  rows, columns = A.shape
-  print(rows, columns)
-  s = list(range(rows)) #python indexing!
 
-  for col in range(0, columns): # range doesn't reach last entry 
-    for i in 
-    j = col
-    column = A[:, j]
-    k = np.argmax(np.abs(column)) # index
-    p = np.max(column) # value
+  rows, columns = A.shape
+
+  s = [i for i in range(rows)]
+
+
+  for j in range(0, columns):
+    Rs = abs(A[j,j])
+    k = j
+    for i in range(j+1,columns):
+        if abs(A[i,j]) >Rs:
+            Rs = abs(A[i,j])
+            k = i
+    # p = np.max(column) # value
+
     if k != j:
       k_row = np.copy(A[k, :])
       j_row = np.copy(A[j, :])
-      A[j, :] = k_row
-      A[k, :] = j_row
-      A_swapped = np.copy(A)
-      #print(A)
-      s_j = np.copy(s[j])
-      s_k = np.copy(s[k])
-      s[j] = s_k
+      A[j, :] = np.copy(k_row)
+      A[k, :] = np.copy(j_row)
+
+      s_j = s[j]
+      s[j] = s[k]
       s[k] = s_j
-      print("----A after swap ---")
-      print(A_swapped)
+      print(A, "HEREEEE")
+
     if (abs(A[j, j]) <= 10**(-16)):
       singular = True
       return A, s, singular
-    for i in range(j+1, rows):
-      A[i, j] /= A[j, j] #A[i][j]/
-      for k_2 in range(j+1, rows):
-        print(A[i,k_2])
-        A[i,k_2] -=  A[i,j]*A[j,k_2]
-  print_matrix(A, "A after LU")
-  return A, s, singular
 
+    for i in range(j+1, rows):
+        A[i, j] /= A[j, j]
+        for t in range(j+1, rows):
+            A[i,t] -=  A[i,j]*A[j,t]
+  print(A)
+  return A, s, singular
 def LU_backsub(A, B, s):
   print("Performing LU Backsubstitution...")
   A_rows, A_cols = A.shape
   B_rows, B_cols = B.shape
   X = np.zeros_like(B)
+  Y = np.zeros_like(B)
+  m = B_rows
+  n = B_cols
+  #initialize y 
+  m = A_rows #n = cols
+  for j in range(0,m):
+    Y[j, :] = B[s[j], :]
   # loop through B columns
-  for col in range(B_cols):
-    x = np.zeros(B_cols)
-    b = B[:,col]
-    y = list(range(len(s)))
-    m = A_rows
-    #initialize y 
-    for j in range(1,m-1):
-      y[j] = b[s[j]]
-    #forward substitution
-    for j in range(1,m-1):
-      for i in range(j+1, m):
-        y[i]= y[i]-y[j]*A[i][j]
-    #backsub
-    for i in range(m, 1, -1): #indexing? 
-      if A[i][i] == 0 :
-        print("Singular")
-        return X
-      sum = 0.0
+  for j in range(0, m - 1):
+    for i in range(j + 1, m):
+      Y[i, :] = Y[i, : ] - Y[j, :]*A[i, j]
+  for j in range(0, n):
+    for i in range(m - 1, -1, -1):
+      if abs(A[i,i]) <= 10**(-16):
+        print("Is singular")
+        return 
+      summation = 0.0
       for k in range(i+1, m):
-        sum += A[i][k]*x[k]
-      x[i] = (y[i]-sum)/A[i][i]
-    X[:, col]=x
-  print_matrix(X, "X from LU Decomposition")
+        summation += A[i,k]*X[k, j]
+      X[i, j] = (Y[i, j] - summation)/A[i,i]
+  print(X)
   return X
+  #   #forward substitution
+  #   for j in range(1,m-1):
+  #     for i in range(j+1, m):
+  #       Y[i, :]= Y[i, :]-Y[j, :]*A[i][j]
+  #   #backsub
+  #   for i in range(m, 1, -1): #indexing? 
+  #     if A[i, i] == 0 :
+  #       print("Singular")
+  #       return X
+  #     sum = 0.0
+  #     for k in range(i+1, m):
+  #       sum += A[i][k]*x[k]
+  #     x[i] = (y[i]-sum)/A[i][i]
+  #   X[:, col]=x
+  # print_matrix(X, "X from LU Decomposition")
+  # return X
 
 
 if __name__ == "__main__":
@@ -209,15 +225,23 @@ if __name__ == "__main__":
   # X = LU_backsub(A_LU, B_matrix, swaps)
 
   #LU Test
-  A_t = np.array([[1, 2], [3, 4]])
-  B_t = np.array([[6, 9], [0, 0]])
+  A_t = np.zeros([2,2])
+  A_t[:,0] = [1,3]
+  A_t[:,1] = [2,4]
+  #A_t = np.array([[1, 2], [3, 4]])
+  B_t = np.zeros([2,2])
+  B_t[:, 0] = [6, 0]
+  B_t[:, 1] = [9, 0]
+  #B_t = np.array([[6, 9], [0, 0]])
   U_t, swaps_t, singular_t = LU_decomp(A_t)
   print("test swaps:" + str(swaps_t))
+  print(U_t)
   #print(scipy.linalg.lu(A_t))
-  #X = LU_backsub(U_t, B_t, swaps_t)
+  X = LU_backsub(U_t, B_t, swaps_t)
 
   #Question 5
   # Q5 = np.array([[1,2,3],[-3,2,5],[np.pi, np.e, -(2**(1/2))]])
   # U_5, swaps_5, singular_5 = LU_decomp(Q5)
   # X_5 = LU_backsub(U_5, B) what to put for B? 
 
+#
