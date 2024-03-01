@@ -90,7 +90,7 @@ def gaussian_elimination_partial_piv(A, B, dummy1, dummy2, dummy3):
         A_B[p, :] = np.array(tmp_1)
         #print(A_B)
     #Checking if it's singular
-    if diag == 0.0:
+    if abs(diag) <= emach :
       is_singular = True
       print("Singular...")
       A = A_B[:, :columns]
@@ -160,7 +160,7 @@ def LU_decomp(Ainput, dummym, dummysingular, dummys):
       s[j] = s[k]
       s[k] = s_j
     #check for singularity 
-    if (abs(A[j, j]) <= 0.0):
+    if (abs(A[j, j]) <= emach):
       singular = True
       return A, s, singular
     #zero lower diags 
@@ -209,7 +209,7 @@ def LU_backsub(A, dummydimension, B, s):
   #backsubstitution
   for j in range(0, n):
     for i in range(m - 1, -1, -1):
-      if abs(A[i,i]) == 0.0:
+      if abs(A[i,i]) <= emach:
         print("Is singular")
         return 
       summation = 0.0
@@ -218,8 +218,37 @@ def LU_backsub(A, dummydimension, B, s):
       X[i, j] = (Y[i, j] - summation)/A[i,i]
   return X
 def plot(X_5, D, Coefs):
-  pass
+  a = X_5[0]
+  b = X_5[1]
+  c = X_5[2]
+  point1 = Coefs[0]
+  point2 = Coefs[1]
+  point3 = Coefs[2]
 
+  xs = np.linspace(-5, 6, 10)
+  ys = np.linspace(-5, 6, 10)
+  #original ax + by + cz = d
+  #z  = (d - ax - by)/c
+  X, Y = np.meshgrid(xs, ys)
+  Z = plane(X, Y, a, b, c)
+  fig = plt.figure()
+  ax = fig.add_subplot(projection = '3d')
+  surf = ax.plot_surface(X, Y, Z, alpha =.5)
+
+  scatter1 = ax.scatter(point1[0], point1[1], point1[2], label = "Point A")
+  scatter2 = ax.scatter(point2[0], point2[1], point2[2], label = "Point B")
+  scatter3 = ax.scatter(point3[0], point3[1], point3[2], label = "Point C")
+  
+  plt.title("Plane Coefficients with LU Decomposition")
+
+  plt.xlabel("X Axis")
+  plt.ylabel("Y Axis")
+
+  plt.show()
+def plane(x, y, a, b, c):
+  d = 1
+  z = (d - a*x - b*y)/c
+  return z 
 if __name__ == "__main__":
   global dummy, emach 
   dummy = " " #used to make input easier for grading, necessary inputs are calculated by the function
@@ -255,14 +284,18 @@ if __name__ == "__main__":
   d = 1.0
   D = np.array([[d], [d], [d]])
   Coefs = np.zeros((3, 3))
-  Coefs[:, 0] = [1, -3, np.pi]
-  Coefs[:, 1] = [2, 2, np.e]
-  Coefs[:, 2] = [3, 5, -(2**(1/2))]
+
+  Coefs[:, 0] = [1, 2, 3]
+  Coefs[:, 1] = [-3, 2, 5]
+  Coefs[:, 2] = [np.pi, np.e, -(2**(1/2))]
+
   U_5, swaps_5, singular_5 = LU_decomp(Coefs, dummy, dummy, dummy)
   X_5 = LU_backsub(U_5, dummy, D, swaps_5)
   print_matrix(X_5, dummy)
-  
+
   plot(X_5, D, Coefs) #couldnt get to work
 
   #Check :) 
   #print(scipy.linalg.lu(A))
+  # I accidentally erased my reference, I think it was this one:
+  # https://www.youtube.com/watch?v=eDb6iugi6Uk
